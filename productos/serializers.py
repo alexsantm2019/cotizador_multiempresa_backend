@@ -22,7 +22,8 @@ class ProductoSerializer(serializers.ModelSerializer):
         de lo contrario devuelve el username.
         """
         if obj.user:
-            return obj.user.first_name if obj.user.first_name else None
+            # return obj.user.first_name if obj.user.first_name else None
+            return obj.user.first_name or obj.user.username
         return None    
 
     def get_estado_info(self, obj):

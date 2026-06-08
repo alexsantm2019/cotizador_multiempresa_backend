@@ -10,6 +10,7 @@ class Catalogo(models.Model):
     detalle = models.CharField(max_length=50, null=True, blank=True)
     color = models.CharField(max_length=20, null=True, blank=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
+    empresa_id = models.PositiveSmallIntegerField(null=True)
     
     class Meta:
         db_table = 'catalogo'

@@ -20,6 +20,13 @@ def get_categoria_producto(request):
     serializer = CategoriaProductoSerializer(categorias, many=True)
     return JsonResponse(serializer.data, safe=False) 
 
+@api_view(['GET'])
+def get_categoria_producto_by_empresa_id(request, empresa_id):
+    # categorias = CategoriaProducto.objects.all().order_by('categoria') 
+    categorias = CategoriaProducto.objects.filter(empresa_id=empresa_id, deleted_at__isnull=True).order_by('categoria')
+    serializer = CategoriaProductoSerializer(categorias, many=True)
+    return JsonResponse(serializer.data, safe=False)     
+
 @api_view(['POST'])
 def create_categoria_producto(request):    
     if request.method == 'POST':

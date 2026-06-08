@@ -61,7 +61,57 @@ def get_catalogos_activos(request):
     """Obtiene todos los registros del catálogo con deleted_at = NULL"""
     catalogos = Catalogo.objects.filter(deleted_at__isnull=True).order_by('grupo','codigo')
     serializer = CatalogoSerializer(catalogos, many=True)
-    return Response(serializer.data)        
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def get_catalogo_by_grupo_by_empresa_id(request, grupo, empresa_id):
+    try:
+        # Filtrar los productos por el grupo numérico
+        catalogo = Catalogo.objects.filter(grupo=grupo, empresa_id=empresa_id, deleted_at__isnull=True).order_by('codigo', 'item')  # Filtrar por grupo numérico
+        
+        if catalogo.exists():
+            serializer = CatalogoSerializer(catalogo, many=True)
+            return Response(serializer.data)
+        else:
+            return Response({"detail": "No se encontraron catalogos para este grupo."}, status=status.HTTP_404_NOT_FOUND)
+    
+    except ValueError:
+        return Response({"detail": "El parámetro 'grupo' debe ser un número."}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def get_catalogo_by_nombre_by_empresa_id(request, nombre, empresa_id):
+    try:
+        # Filtrar coincidencias parciales en cualquier parte del texto
+        catalogo = Catalogo.objects.filter(
+            empresa_id=empresa_id,
+            detalle__icontains=nombre,
+            deleted_at__isnull=True
+        ).order_by('codigo', 'item')
+
+        if catalogo.exists():
+            serializer = CatalogoSerializer(catalogo, many=True)
+            return Response(serializer.data)
+        else:
+            return Response({"detail": "No se encontraron catálogos que coincidan con el texto buscado."},
+                            status=status.HTTP_404_NOT_FOUND)
+
+    except Exception as e:
+        return Response({"detail": "Error en la búsqueda: " + str(e)}, 
+                        status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def get_catalogos_by_empresa_id(request, empresa_id):
+    """Obtiene todos los registros del catálogo con deleted_at = NULL"""
+    catalogos = Catalogo.objects.filter(empresa_id=empresa_id).order_by('grupo')
+    serializer = CatalogoSerializer(catalogos, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def get_catalogos_activos_by_empresa_id(request, empresa_id):
+    """Obtiene todos los registros del catálogo con deleted_at = NULL"""
+    catalogos = Catalogo.objects.filter(empresa_id=empresa_id, deleted_at__isnull=True).order_by('grupo','codigo')
+    serializer = CatalogoSerializer(catalogos, many=True)
+    return Response(serializer.data)            
 
 @api_view(['DELETE'])
 def eliminar_catalogo(request, id):
