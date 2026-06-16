@@ -21,6 +21,7 @@ from django.views.decorators.http import require_POST
 from .models import Producto
 from .models import Catalogo
 from .models import Cotizacion, CotizacionDetalle
+from empresa.models import Empresa, UsuarioEmpresa
 
 # Para enviar PDF y whatsapp:
 from django.core.mail import EmailMessage
@@ -516,9 +517,34 @@ def generar_pdf(cotizacion_id):
     elements = []
 
     # LOGO
-    logo_path = os.path.join(settings.MEDIA_ROOT, 'logos', 'logo_mundi.jpg')
-    if os.path.exists(logo_path):
-        logo = Image(logo_path, width=6 * cm, height=2.5 * cm)
+    # logo_path = os.path.join(settings.MEDIA_ROOT, 'logos', 'logo_mundi.jpg')
+    # if os.path.exists(logo_path):
+    #     logo = Image(logo_path, width=6 * cm, height=2.5 * cm)
+    #     logo.hAlign = 'CENTER'
+    #     elements.append(logo)
+    #     elements.append(Spacer(1, 10))
+
+    # --- LOGO DE LA EMPRESA ---
+    logo = None
+    
+    # Obtener la empresa del usuario que creó la cotización
+    if cotizacion.user:
+        try:
+            # Buscar el UsuarioEmpresa asociado al usuario
+            usuario_empresa = UsuarioEmpresa.objects.get(user=cotizacion.user)
+            empresa = usuario_empresa.empresa
+            
+            # Verificar si la empresa tiene logo
+            if empresa.logo:
+                logo_path = empresa.logo.path  # Obtener la ruta del archivo
+                if os.path.exists(logo_path):
+                    logo = Image(logo_path, width=6 * cm, height=2.5 * cm)
+        except UsuarioEmpresa.DoesNotExist:
+            # Si el usuario no tiene empresa asociada, no hacer nada
+            pass
+
+    # Solo agregar el logo si existe
+    if logo:
         logo.hAlign = 'CENTER'
         elements.append(logo)
         elements.append(Spacer(1, 10))

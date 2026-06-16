@@ -77,6 +77,7 @@ INSTALLED_APPS = [
     'categoria_producto',
     'inventario',
     'empresa',
+    'usuarios',
     'authorization'
 ]
 

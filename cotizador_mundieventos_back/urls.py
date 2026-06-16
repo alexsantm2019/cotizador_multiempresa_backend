@@ -31,6 +31,7 @@ urlpatterns = [
     path('api/cotizaciones/', include('cotizaciones.urls')),
     path('api/inventario/', include('inventario.urls')),
     path('api/empresas/', include('empresa.urls')),
+    path('api/usuarios/', include('usuarios.urls')),
 
     # Autenticacion v1.0 (jwt by default)
     # path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

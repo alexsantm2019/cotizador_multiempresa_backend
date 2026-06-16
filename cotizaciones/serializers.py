@@ -8,6 +8,8 @@ from productos.models import Producto
 from paquetes.models import Paquete
 from clientes.models import Cliente
 from catalogos.models import Catalogo
+from catalogos.models import Catalogo
+from django.contrib.auth.models import User
 
 class CotizacionDetalleSerializer(serializers.ModelSerializer):
     producto = serializers.PrimaryKeyRelatedField(queryset=Producto.objects.all(), required=False, allow_null=True)
@@ -39,6 +41,12 @@ class CotizacionSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
     estado_info = serializers.SerializerMethodField()
     evento = serializers.SerializerMethodField()
+
+    # Esta es la opción más simple
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        required=True
+    )
 
     # NUEVO: Método para inicializar con datos precargados
     def __init__(self, *args, **kwargs):
