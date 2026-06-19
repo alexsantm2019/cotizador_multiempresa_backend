@@ -1,7 +1,8 @@
 from django.urls import path
 from .views import (
     EmpresaListCreateView,
-    EmpresaDetailView
+    EmpresaDetailView,
+    listar_todas_empresas
 )
 
 urlpatterns = [
@@ -16,4 +17,5 @@ urlpatterns = [
         EmpresaDetailView.as_view(),
         name='empresa-detail'
     ),
+    path('lista-empresas/', listar_todas_empresas, name='lista-empresas'),
 ]

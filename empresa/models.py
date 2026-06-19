@@ -119,6 +119,8 @@ class UsuarioEmpresa(models.Model):
         auto_now_add=True
     )
 
+    es_admin_empresa = models.BooleanField(default=False)
+
     class Meta:
         db_table = 'usuario_empresa'
 

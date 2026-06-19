@@ -1,6 +1,7 @@
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from empresa.models import UsuarioEmpresa
 from django.conf import settings
+from django.utils import timezone
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
@@ -16,6 +17,9 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         data['first_name'] = self.user.first_name
         data['last_name'] = self.user.last_name
         data['email'] = self.user.email
+
+        self.user.last_login = timezone.now()
+        self.user.save(update_fields=['last_login'])
 
         if self.user.first_name and self.user.last_name:
             full_name = (

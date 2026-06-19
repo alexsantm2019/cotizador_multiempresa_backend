@@ -9,6 +9,7 @@ class UserSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
     empresas = serializers.SerializerMethodField()
     empresa_id = serializers.SerializerMethodField()
+    es_admin_empresa = serializers.SerializerMethodField()
     empresa_nombre = serializers.SerializerMethodField()
     
     class Meta:
@@ -16,7 +17,8 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name', 
             'full_name', 'is_active', 'is_staff', 'is_superuser',
-            'last_login', 'date_joined', 'empresas', 'empresa_id', 'empresa_nombre'
+            'last_login', 'date_joined', 'empresas', 'empresa_id', 'empresa_nombre',
+            'es_admin_empresa'
         ]
     
     def get_full_name(self, obj):
@@ -33,6 +35,11 @@ class UserSerializer(serializers.ModelSerializer):
             }
             for ue in usuario_empresas
         ]
+
+    def get_es_admin_empresa(self, obj):
+        """Obtener si el usuario es administrador de su empresa"""
+        usuario_empresa = UsuarioEmpresa.objects.filter(user=obj).first()
+        return usuario_empresa.es_admin_empresa if usuario_empresa else False        
     
     def get_empresa_id(self, obj):
         """Obtener la primera empresa del usuario"""
@@ -54,12 +61,13 @@ class UserCreateSerializer(serializers.ModelSerializer):
         style={'input_type': 'password'}
     )
     empresa_id = serializers.IntegerField(write_only=True, required=True)
+    es_admin_empresa = serializers.BooleanField(write_only=True, required=False, default=False)
     
     class Meta:
         model = User
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name', 
-            'password', 'is_active', 'is_staff', 'is_superuser', 'empresa_id'
+            'password', 'is_active', 'is_staff', 'is_superuser', 'empresa_id', 'es_admin_empresa' 
         ]
         extra_kwargs = {
             'password': {'write_only': True}
@@ -91,7 +99,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         empresa_id = validated_data.pop('empresa_id')
-        
+        es_admin_empresa = validated_data.pop('es_admin_empresa', False)
         user = User.objects.create_user(**validated_data)
         
         try:
@@ -99,7 +107,8 @@ class UserCreateSerializer(serializers.ModelSerializer):
             # ⭐ Crear relación sin campo de estado
             UsuarioEmpresa.objects.create(
                 user=user,
-                empresa=empresa
+                empresa=empresa,
+                es_admin_empresa=es_admin_empresa
             )
         except Empresa.DoesNotExist:
             pass
@@ -114,12 +123,13 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         style={'input_type': 'password'}
     )
     empresa_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
-    
+    es_admin_empresa = serializers.BooleanField(write_only=True, required=False)
+
     class Meta:
         model = User
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name', 
-            'password', 'is_active', 'is_staff', 'is_superuser', 'empresa_id'
+            'password', 'is_active', 'is_staff', 'is_superuser', 'empresa_id', 'es_admin_empresa' 
         ]
     
     def validate_username(self, value):
@@ -135,6 +145,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         return value
     
     def update(self, instance, validated_data):
+        es_admin_empresa = validated_data.pop('es_admin_empresa', None)
         password = validated_data.pop('password', None)
         empresa_id = validated_data.pop('empresa_id', None)
         
@@ -156,5 +167,12 @@ class UserUpdateSerializer(serializers.ModelSerializer):
                 )
             except Empresa.DoesNotExist:
                 pass
+
+        if es_admin_empresa is not None:
+            # Buscar la empresa del usuario (si tiene una)
+            usuario_empresa = UsuarioEmpresa.objects.filter(user=instance).first()
+            if usuario_empresa:
+                usuario_empresa.es_admin_empresa = es_admin_empresa
+                usuario_empresa.save()                
         
         return instance

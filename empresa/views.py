@@ -1,13 +1,43 @@
+# empresa/views.py
 from django.shortcuts import render
-
-# Create yourfrom django.utils import timezone
-
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+# ⭐ IMPORTAR api_view y permission_classes
+from rest_framework.decorators import api_view, permission_classes
+# ⭐ IMPORTAR los permisos
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from .models import Empresa
 from .serializers import EmpresaSerializer
+import logging
+
+logger = logging.getLogger(__name__)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def listar_todas_empresas(request):
+    """
+    Endpoint exclusivo para superadmin/administradores.
+    Devuelve todas las empresas sin ningún filtro.
+    """
+    try:
+        empresas = Empresa.objects.all().order_by('nombre')
+        serializer = EmpresaSerializer(empresas, many=True)
+        
+        logger.info(f"📊 Total empresas devueltas: {empresas.count()}")
+        
+        return Response({
+            'success': True,
+            'count': empresas.count(),
+            'data': serializer.data
+        })
+    except Exception as e:
+        logger.error(f"❌ Error al listar empresas: {str(e)}")
+        return Response(
+            {'success': False, 'error': str(e)},
+            status=500
+        )
 
 
 # ==========================================
@@ -108,6 +138,13 @@ class EmpresaDetailView(APIView):
                 {'error': 'Empresa no encontrada'},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+        if empresa.logo:
+            try:
+                if os.path.isfile(empresa.logo.path):
+                    os.remove(empresa.logo.path)
+            except:
+                pass            
 
         empresa.deleted_at = timezone.now()
         empresa.save()
