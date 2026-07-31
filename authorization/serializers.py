@@ -17,6 +17,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         data['first_name'] = self.user.first_name
         data['last_name'] = self.user.last_name
         data['email'] = self.user.email
+        data['is_superuser'] = self.user.is_superuser 
 
         self.user.last_login = timezone.now()
         self.user.save(update_fields=['last_login'])
@@ -52,7 +53,8 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
             data['empresa_plan'] = (
                 usuario_empresa.empresa.plan
             )
-             # ===============================
+            data['es_admin_empresa'] = usuario_empresa.es_admin_empresa 
+            # ===============================
             # LOGO EMPRESA
             # ===============================
             if empresa.logo:
@@ -63,10 +65,24 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
             else:
                 data['empresa_logo'] = None
 
+           # ⭐ Determinar el rol basado en is_superuser y es_admin_empresa
+            if self.user.is_superuser:
+                data['rol'] = 'superadmin'
+            elif usuario_empresa.es_admin_empresa:
+                data['rol'] = 'admin_empresa'
+            else:
+                data['rol'] = 'usuario'              
+
         except UsuarioEmpresa.DoesNotExist:
             data['empresa_id'] = None
             data['empresa_nombre'] = None
             data['empresa_plan'] = None
+            data['es_admin_empresa'] = False 
+
+            if self.user.is_superuser:
+                data['rol'] = 'superadmin'
+            else:
+                data['rol'] = 'usuario'
 
         return data
 
